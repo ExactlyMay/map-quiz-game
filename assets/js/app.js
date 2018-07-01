@@ -1,7 +1,36 @@
+var intervalId;
+var time;
+var correctCounter = 0;
+var incorrectCounter = 0;
+var unansweredCounter = 0;
+var questionCounter = 0;
+var correctAnswer;
+var correctImage;
+var quiz = [{
+		question: "Sample question for number one?",
+		choices: ["1A", "1B", "1C", "1D"],
+		answer: "1C",
+		image: "assets/images/ice.gif"
+	},
+	{
+	  question: "Sample question for number two?",
+	  choices: ["2A", "2A", "2A", "2A"],
+	  answer: "2A",
+	  image: "assets/images/deckard.gif"
+	},
+	{
+	  question: "Sample question for number three?",
+	  choices: ["3A", "3B", "3C", "3D"],
+	  answer: "3D",
+	  image: "assets/images/cass.gif"
+	}       
+];
+
+
 $(document).ready(function(){
     $('#quizModal').modal('hide')
 
-    $('.map').on('click', 'path', consoleObject);
+    $('.map').on('click', 'path', stateQuiz);
 
     $(function () {
         $(".mapcontainer").mapael({
@@ -116,9 +145,92 @@ $(document).ready(function(){
 });
 
 
-function consoleObject(){
+function stateQuiz(){
     console.log("$(this).attr('data-id'): " + $(this).attr("data-id"));
+
+    time = 15;
+	correctCounter = 0;
+	incorrectCounter = 0;
+	unansweredCounter = 0;
+	questionCounter = 0;
+
     var state = $(this).attr("data-id");
     $('#quizModal').modal('show');
     $('#quizTitle').html("This is the " + state + " quiz!");
+	$("#timer").html("Time Remaining: " + time);
+    $('#quizQuestion').html("");
+    $("#choices").html("");
+	clearInterval(intervalId);
+	intervalId = setInterval(decrement, 1000);
+	quizQuestions(questionCounter);
+}
+
+function quizQuestions(number) {
+	var question = quiz[number].question;
+	$("#question").html("Question #" + parseInt(number+1) + ": " + question);
+	var options = quiz[number].choices;
+	for (var opt in options) {
+		$("#choices").append("<button class='btnChoices'>" + options[opt] + "</button>" + "<br>");
+	}
+	correctAnswer = quiz[number].answer;
+	correctImage = quiz[number].image;
+	checkAnswer(correctAnswer);
+}
+
+function checkAnswer(answer) {
+	$(".btnChoices").on("click", function() {
+		var userText = $(this).text();
+		if (answer === userText) {
+			correctCounter++;
+			$("#question").hide();
+			$("#choices").html("Wow, you got it!");
+			stop();
+		} else {
+			incorrectCounter++;
+			$("#choices").html("That's the wrong answer...");
+			wrongAnswer();
+		}
+		questionCounter++;
+		setTimeout(resetQuestion, 1000 * 5);
+	});
+}
+
+function decrement() {
+	time--;
+	$("#timer").html("Time Remaining: " + time);
+	if (time === 0) {
+		unansweredCounter++;
+		$("#choices").html("Out of time!");
+		wrongAnswer();
+		questionCounter++;
+		setTimeout(resetQuestion, 1000 * 3);
+	}
+}
+
+function stop() {
+	clearInterval(intervalId);
+}
+
+function resetQuestion() {
+	if (questionCounter == quiz.length) {
+		$("#question").show();
+		$("#question").html("All done, here's how you did!");
+		$("#choices").html("<p id='results'> Correct Answers: " + correctCounter + "<br>" + "Incorrect Answers: " + incorrectCounter + "<br>" + "Unanswered: " + unansweredCounter + "</p>");
+		$("#start").show();
+		$("#start").html("Start Over?");
+	} else {
+		time = 15;
+		$("#timer").html("Time Remaining: " + time);
+		$("#question").show();
+		$("#choices").html("");
+		clearInterval(intervalId);
+		intervalId = setInterval(decrement, 1000);
+		quizQuestions(questionCounter);
+	}
+}
+
+function wrongAnswer() {
+	$("#question").hide();
+	$("#choices").append(" The correct answer was: " + correctAnswer);
+	stop();
 }
